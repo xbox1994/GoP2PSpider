@@ -1,6 +1,9 @@
 package main
 
 import (
+	"GoP2PSpider/config"
+	"GoP2PSpider/rpcsupport"
+	"GoP2PSpider/types"
 	"GoP2PSpider/util/bencode"
 	"GoP2PSpider/util/bep"
 	"GoP2PSpider/util/dht"
@@ -10,6 +13,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net"
+	"net/rpc"
 	"os"
 	"path"
 	"path/filepath"
@@ -33,51 +37,25 @@ func home() string {
 	return os.Getenv(env)
 }
 
-type tfile struct {
-	name   string
-	length int64
-}
-
-func (tf *tfile) String() string {
-	return fmt.Sprintf("name: %s\n, size: %d\n", tf.name, tf.length)
-}
-
-type torrent struct {
-	infohashHex string
-	name        string
-	length      int64
-	files       []*tfile
-}
-
-func (t *torrent) String() string {
-	return fmt.Sprintf(
-		"link: %s\nname: %s\nsize: %d\nfile: %d\n",
-		fmt.Sprintf("magnet:?xt=urn:btih:%s", t.infohashHex),
-		t.name,
-		t.length,
-		len(t.files),
-	)
-}
-
-func newTorrent(meta []byte, infohashHex string) (*torrent, error) {
+func newTorrent(meta []byte, infohashHex string) (*types.Torrent, error) {
 	dict, err := bencode.Decode(bytes.NewBuffer(meta))
 	if err != nil {
 		return nil, err
 	}
-	t := &torrent{infohashHex: infohashHex}
+	t := &types.Torrent{InfoHashHex: infohashHex}
 	if name, ok := dict["name.utf-8"].(string); ok {
-		t.name = name
+		t.Name = name
 	} else if name, ok := dict["name"].(string); ok {
-		t.name = name
+		t.Name = name
 	}
 	if length, ok := dict["length"].(int64); ok {
-		t.length = length
+		t.Length = length
 	}
 	var total int64
 	if files, ok := dict["files"].([]interface{}); ok {
 		for _, file := range files {
 			var filename string
-			var filelength int64
+			var fileLength int64
 			if f, ok := file.(map[string]interface{}); ok {
 				if inter, ok := f["path.utf-8"].([]interface{}); ok {
 					path := make([]string, len(inter))
@@ -93,18 +71,18 @@ func newTorrent(meta []byte, infohashHex string) (*torrent, error) {
 					filename = strings.Join(path, "/")
 				}
 				if length, ok := f["length"].(int64); ok {
-					filelength = length
-					total += filelength
+					fileLength = length
+					total += fileLength
 				}
-				t.files = append(t.files, &tfile{name: filename, length: filelength})
+				t.Files = append(t.Files, &types.TFile{Name: filename, Length: fileLength})
 			}
 		}
 	}
-	if t.length == 0 {
-		t.length = total
+	if t.Length == 0 {
+		t.Length = total
 	}
-	if len(t.files) == 0 {
-		t.files = append(t.files, &tfile{name: t.name, length: t.length})
+	if len(t.Files) == 0 {
+		t.Files = append(t.Files, &types.TFile{Name: t.Name, Length: t.Length})
 	}
 	return t, nil
 }
@@ -152,13 +130,14 @@ func (b *blacklist) sweep() {
 }
 
 type p2pspider struct {
-	laddr      string
-	maxFriends int
-	maxPeers   int
-	secret     string
-	timeout    time.Duration
-	blacklist  *blacklist
-	dir        string
+	laddr        string
+	maxFriends   int
+	maxPeers     int
+	secret       string
+	timeout      time.Duration
+	blacklist    *blacklist
+	dir          string
+	engineClient *rpc.Client
 }
 
 func (p *p2pspider) run() {
@@ -207,6 +186,9 @@ func (p *p2pspider) work(ac *dht.Announce, tokens chan struct{}) {
 		return
 	}
 	log.Println(t)
+
+	// call engine client to send t
+	p.engineClient.Call(config.EngineDataReceiver, t, "")
 }
 
 func (p *p2pspider) isExist(infohashHex string) bool {
@@ -249,32 +231,38 @@ func (p *p2pspider) pathname(infohashHex string) (name string, dir string) {
 
 func main() {
 	addr := flag.String("a", "0.0.0.0", "listen on given address")
-	port := flag.Int("p", 6881, "listen on given port")
+	port := flag.Int("p", 6881, "worker listen on given port")
 	maxFriends := flag.Int("f", 500, "max friends to make with per second")
 	peers := flag.Int("e", 400, "max peers(TCP) to connenct to download torrent file")
 	timeout := flag.Duration("t", 10*time.Second, "max time allowed for downloading torrent file")
 	secret := flag.String("s", "$p2pspider$", "token secret")
 	dir := flag.String("d", path.Join(home(), Dir), "the directory to store the torrent file")
 	verbose := flag.Bool("v", true, "run in verbose mode")
+	engineHost := flag.String("eh", "0.0.0.0:9000", "engine data receive host")
 	flag.Parse()
 	absDir, err := filepath.Abs(*dir)
 	if err != nil {
 		panic(err)
 	}
-	log.SetFlags(0)
 	if *verbose {
 		log.SetOutput(os.Stdout)
 	} else {
 		log.SetOutput(ioutil.Discard)
 	}
-	p := &p2pspider{
-		laddr:      fmt.Sprintf("%s:%d", *addr, *port),
-		timeout:    *timeout,
-		maxFriends: *maxFriends,
-		maxPeers:   *peers,
-		secret:     *secret,
-		dir:        absDir,
-		blacklist:  newBlackList(10 * time.Minute),
+	client, e := rpcsupport.NewClient(*engineHost)
+	if e != nil {
+		panic(e)
 	}
+	p := &p2pspider{
+		laddr:        fmt.Sprintf("%s:%d", *addr, *port),
+		timeout:      *timeout,
+		maxFriends:   *maxFriends,
+		maxPeers:     *peers,
+		secret:       *secret,
+		dir:          absDir,
+		blacklist:    newBlackList(10 * time.Minute),
+		engineClient: client,
+	}
+
 	p.run()
 }
