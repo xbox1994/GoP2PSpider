@@ -26,6 +26,7 @@ func main() {
 	if e != nil {
 		panic(e)
 	}
+	fmt.Println("engine service starting up finished, waiting for request...")
 	log.Fatal(rpcsupport.ServeRpc(fmt.Sprintf(":%d", *enginePort), &service.DataReceiver{
 		Client: client,
 	}))
