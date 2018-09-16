@@ -12,14 +12,15 @@ type DataService struct {
 	Client *elastic.Client
 }
 
-func (d *DataService) Save(torrent types.Torrent, result *string) error {
-	e := Save(d.Client, torrent)
+func (d *DataService) Save(torrent *types.Torrent, result *string) error {
+	log.Printf("Torrent received in data service, will be save to es: \n%s", torrent)
+	e := Save(d.Client, *torrent)
 	if e == nil {
 		*result = "ok"
-		log.Printf("Success saving %v", torrent)
+		log.Printf("Success saving %s", torrent)
 	} else {
 		*result = "fail"
-		log.Printf("Error saving %v, %v", torrent, e)
+		log.Printf("Error saving %s, %v", torrent, e)
 	}
 	return e
 }

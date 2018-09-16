@@ -10,7 +10,7 @@ These images can include anything about GoP2PSpider:
 2. make your server udp inbound port available(default: 6881)
 3. run data service `go run data/server/main.go --port 9001`
 4. run engine service `go run engine/server/main.go --port 9000 --data_service_host=":9001"`
-5. run as many workers as possible `cd src/GoP2PSpider && go run worker/server/main.go -wc 20`
+5. run as many workers as possible `cd ~/go/src/GoP2PSpider && go run worker/server/main.go -wc 50`
 
 # TODO
 1. worker code refactor

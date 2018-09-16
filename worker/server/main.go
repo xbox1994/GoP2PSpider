@@ -187,8 +187,11 @@ func (p *p2pspider) work(ac *dht.Announce, tokens chan struct{}) {
 	}
 	log.Println(t)
 
-	// call engine client to send t
-	p.engineClient.Call(config.EngineDataReceiver, t, "")
+	result := ""
+	e := p.engineClient.Call(config.EngineDataReceiver, t, &result)
+	if e != nil {
+		log.Printf("worker call engine error: %v", e)
+	}
 }
 
 func (p *p2pspider) isExist(infohashHex string) bool {
@@ -253,7 +256,6 @@ func main() {
 	if e != nil {
 		panic(e)
 	}
-
 	for i := 0; i < *workerCount; i++ {
 		go func() {
 			p := &p2pspider{
@@ -270,6 +272,5 @@ func main() {
 			p.run()
 		}()
 	}
-
 	select {}
 }
