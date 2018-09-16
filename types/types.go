@@ -15,11 +15,11 @@ type TFile struct {
 }
 
 func (tf *TFile) String() string {
-	return fmt.Sprintf("name: %s\n, size: %d\n", tf.Name, tf.Length)
+	return fmt.Sprintf("name: %s , size: %d ", tf.Name, tf.Length)
 }
 
 func (t *Torrent) String() string {
-	return fmt.Sprintf("link: %s\nname: %s\nsize: %d\nfile: %d\n",
+	return fmt.Sprintf("link: %s name: %s size: %d file: %d ",
 		fmt.Sprintf("magnet:?xt=urn:btih:%s", t.InfoHashHex),
 		t.Name,
 		t.Length,

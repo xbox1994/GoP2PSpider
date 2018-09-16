@@ -5,6 +5,7 @@ import (
 	"GoP2PSpider/rpcsupport"
 	"GoP2PSpider/types"
 	"testing"
+	"time"
 )
 
 func TestWorkerCallEngine(t *testing.T) {
@@ -20,5 +21,12 @@ func TestWorkerCallEngine(t *testing.T) {
 		Length:      3,
 		Files:       []*types.TFile{&tFile},
 	}
-	client.Call(config.EngineDataReceiver, torrent, "")
+	for {
+		time.Sleep(time.Second)
+		result := ""
+		e := client.Call(config.EngineDataReceiver, torrent, &result)
+		if e != nil {
+			panic(e)
+		}
+	}
 }
