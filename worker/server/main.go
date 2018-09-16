@@ -231,7 +231,6 @@ func (p *p2pspider) pathname(infohashHex string) (name string, dir string) {
 
 func main() {
 	addr := flag.String("a", "0.0.0.0", "listen on given address")
-	port := flag.Int("p", 6881, "worker listen on given port")
 	maxFriends := flag.Int("f", 500, "max friends to make with per second")
 	peers := flag.Int("e", 400, "max peers(TCP) to connenct to download torrent file")
 	timeout := flag.Duration("t", 10*time.Second, "max time allowed for downloading torrent file")
@@ -239,6 +238,7 @@ func main() {
 	dir := flag.String("d", path.Join(home(), Dir), "the directory to store the torrent file")
 	verbose := flag.Bool("v", true, "run in verbose mode")
 	engineHost := flag.String("eh", "0.0.0.0:9000", "engine data receive host")
+	workerCount := flag.Int("wc", 1, "worker count in local machine")
 	flag.Parse()
 	absDir, err := filepath.Abs(*dir)
 	if err != nil {
@@ -253,16 +253,23 @@ func main() {
 	if e != nil {
 		panic(e)
 	}
-	p := &p2pspider{
-		laddr:        fmt.Sprintf("%s:%d", *addr, *port),
-		timeout:      *timeout,
-		maxFriends:   *maxFriends,
-		maxPeers:     *peers,
-		secret:       *secret,
-		dir:          absDir,
-		blacklist:    newBlackList(10 * time.Minute),
-		engineClient: client,
+
+	for i := 0; i < *workerCount; i++ {
+		go func() {
+			p := &p2pspider{
+				laddr:        fmt.Sprintf("%s:%d", *addr, 0),
+				timeout:      *timeout,
+				maxFriends:   *maxFriends,
+				maxPeers:     *peers,
+				secret:       *secret,
+				dir:          absDir,
+				blacklist:    newBlackList(10 * time.Minute),
+				engineClient: client,
+			}
+
+			p.run()
+		}()
 	}
 
-	p.run()
+	select {}
 }
