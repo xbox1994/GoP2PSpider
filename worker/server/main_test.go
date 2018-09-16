@@ -16,7 +16,7 @@ func TestWorkerCallEngine(t *testing.T) {
 		Length: 100,
 	}
 	torrent := types.Torrent{
-		InfoHashHex: "hash",
+		InfoHashHex: "magnet:?xt=urn:btih:hash2",
 		Name:        "zhongziname",
 		Length:      3,
 		Files:       []*types.TFile{&tFile},

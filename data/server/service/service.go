@@ -13,16 +13,27 @@ type DataService struct {
 }
 
 func (d *DataService) Save(torrent *types.Torrent, result *string) error {
-	log.Printf("Torrent received in data service, will be save to es: \n%s", torrent)
-	e := Save(d.Client, *torrent)
-	if e == nil {
+	query := elastic.NewTermQuery("_id", torrent.InfoHashHex)
+	searchResult, repeatErr := d.Client.Search().
+		Index(config.ElasticIndex).
+		Type(config.ElasticType).
+		Query(query).
+		Do(context.Background())
+	if searchResult.Hits.TotalHits > 0 || repeatErr != nil {
+		log.Printf("Torrent existed, won't be save: %s", torrent)
+		return repeatErr
+	}
+
+	log.Printf("Torrent received in data service, will be save to es: %s", torrent)
+	saveErr := Save(d.Client, *torrent)
+	if saveErr == nil {
 		*result = "ok"
 		log.Printf("Success saving %s", torrent)
 	} else {
 		*result = "fail"
-		log.Printf("Error saving %s, %v", torrent, e)
+		log.Printf("Error saving %s, %v", torrent, saveErr)
 	}
-	return e
+	return saveErr
 }
 
 func Save(client *elastic.Client, torrent types.Torrent) error {
@@ -31,6 +42,7 @@ func Save(client *elastic.Client, torrent types.Torrent) error {
 		Type(config.ElasticType).
 		Id(torrent.InfoHashHex).
 		BodyJson(torrent).
+		Id(torrent.InfoHashHex).
 		Do(context.Background())
 	if e != nil {
 		log.Printf("es create index fail %v", e)

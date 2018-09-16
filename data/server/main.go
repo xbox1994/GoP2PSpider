@@ -10,12 +10,8 @@ import (
 )
 
 func main() {
-	port := flag.Int("port", 0, "the port listen on localhost, waiting for engine call")
+	port := flag.Int("p", 9000, "the port listen on localhost, waiting for engine call")
 	flag.Parse()
-	if *port == 0 {
-		fmt.Println("must specify a data service port")
-		return
-	}
 
 	client, e := elastic.NewClient(elastic.SetSniff(false))
 	if e != nil {
