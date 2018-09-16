@@ -9,8 +9,8 @@ import (
 )
 
 func TestWorkerCallEngine(t *testing.T) {
-	const engineHost = ":9000"
-	client, _ := rpcsupport.NewClient(engineHost)
+	const dataHost = ":9000"
+	client, _ := rpcsupport.NewClient(dataHost)
 	tFile := types.TFile{
 		Name:   "tfboy",
 		Length: 100,
@@ -24,7 +24,7 @@ func TestWorkerCallEngine(t *testing.T) {
 	for {
 		time.Sleep(time.Second)
 		result := ""
-		e := client.Call(config.EngineDataReceiver, torrent, &result)
+		e := client.Call(config.DataService, torrent, &result)
 		if e != nil {
 			panic(e)
 		}

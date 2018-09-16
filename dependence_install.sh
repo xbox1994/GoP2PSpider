@@ -17,3 +17,7 @@ mkdir src
 cd src
 git clone https://github.com/xbox1994/GoP2PSpider.git
 cd GoP2PSpider
+
+go get gopkg.in/olivere/elastic.v5
+go get github.com/xbox1994/bencode
+go get golang.org/x/time/rate

@@ -1,17 +1,19 @@
 # GoP2PSpider
 A distributed P2P spider made by Go, only for study, based on https://github.com/fanpei91/p2pspider.
 
-These images can include anything about GoP2PSpider:
+GoP2PSpider architecture image:
 
-![](p2pspider.png)
+![](spider.png)
 
 # How to run it
-1. install go, and `go get gopkg.in/olivere/elastic.v5` `github.com/xbox1994/bencode` `go get golang.org/x/time/rate`
-2. make your server udp inbound port available(default: 6881)
-3. run data service `go run data/server/main.go --port 9001`
-4. run engine service `go run engine/server/main.go --port 9000 --data_service_host=":9001"`
-5. run as many workers as possible `cd ~/go/src/GoP2PSpider && go run worker/server/main.go -wc 50`
+1. run `dependence_install.sh`
+2. make udp all inbound port available
+3. run data service on one server`go run data/server/main.go --port 9000`
+4. run as many workers as possible in any server`go run worker/server/main.go -wc 50`
 
 # TODO
 1. worker code refactor
-2. performance enhancement
+2. worker performance enhancement
+3. data service repeat check
+4. data service query api
+5. auto starting up script

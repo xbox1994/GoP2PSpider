@@ -130,14 +130,14 @@ func (b *blacklist) sweep() {
 }
 
 type p2pspider struct {
-	laddr        string
-	maxFriends   int
-	maxPeers     int
-	secret       string
-	timeout      time.Duration
-	blacklist    *blacklist
-	dir          string
-	engineClient *rpc.Client
+	laddr      string
+	maxFriends int
+	maxPeers   int
+	secret     string
+	timeout    time.Duration
+	blacklist  *blacklist
+	dir        string
+	dataClient *rpc.Client
 }
 
 func (p *p2pspider) run() {
@@ -188,9 +188,9 @@ func (p *p2pspider) work(ac *dht.Announce, tokens chan struct{}) {
 	log.Println(t)
 
 	result := ""
-	e := p.engineClient.Call(config.EngineDataReceiver, t, &result)
+	e := p.dataClient.Call(config.DataService, t, &result)
 	if e != nil {
-		log.Printf("worker call engine error: %v", e)
+		log.Printf("worker call data error: %v", e)
 	}
 }
 
@@ -240,7 +240,7 @@ func main() {
 	secret := flag.String("s", "$p2pspider$", "token secret")
 	dir := flag.String("d", path.Join(home(), Dir), "the directory to store the torrent file")
 	verbose := flag.Bool("v", true, "run in verbose mode")
-	engineHost := flag.String("eh", "0.0.0.0:9000", "engine data receive host")
+	dataHost := flag.String("dh", "0.0.0.0:9000", "data receive host")
 	workerCount := flag.Int("wc", 1, "worker count in local machine")
 	flag.Parse()
 	absDir, err := filepath.Abs(*dir)
@@ -252,21 +252,21 @@ func main() {
 	} else {
 		log.SetOutput(ioutil.Discard)
 	}
-	client, e := rpcsupport.NewClient(*engineHost)
+	client, e := rpcsupport.NewClient(*dataHost)
 	if e != nil {
 		panic(e)
 	}
 	for i := 0; i < *workerCount; i++ {
 		go func() {
 			p := &p2pspider{
-				laddr:        fmt.Sprintf("%s:%d", *addr, 0),
-				timeout:      *timeout,
-				maxFriends:   *maxFriends,
-				maxPeers:     *peers,
-				secret:       *secret,
-				dir:          absDir,
-				blacklist:    newBlackList(10 * time.Minute),
-				engineClient: client,
+				laddr:      fmt.Sprintf("%s:%d", *addr, 0),
+				timeout:    *timeout,
+				maxFriends: *maxFriends,
+				maxPeers:   *peers,
+				secret:     *secret,
+				dir:        absDir,
+				blacklist:  newBlackList(10 * time.Minute),
+				dataClient: client,
 			}
 
 			p.run()
