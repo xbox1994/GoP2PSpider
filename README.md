@@ -14,3 +14,4 @@ GoP2PSpider architecture image:
 1. worker code refactor
 2. worker performance enhancement
 3. data service query api and web interface
+4. remove torrent saver function

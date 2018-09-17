@@ -14,14 +14,14 @@ type DataService struct {
 
 func (d *DataService) Save(torrent *types.Torrent, result *string) error {
 	query := elastic.NewTermQuery("_id", torrent.InfoHashHex)
-	searchResult, repeatErr := d.Client.Search().
+	searchResult, e := d.Client.Search().
 		Index(config.ElasticIndex).
 		Type(config.ElasticType).
 		Query(query).
 		Do(context.Background())
-	if searchResult.Hits.TotalHits > 0 || repeatErr != nil {
+	if searchResult != nil && searchResult.Hits.TotalHits > 0 {
 		log.Printf("Torrent existed, won't be save: %s", torrent)
-		return repeatErr
+		return e
 	}
 
 	log.Printf("Torrent received in data service, will be save to es: %s", torrent)
