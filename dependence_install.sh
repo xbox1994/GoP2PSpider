@@ -8,6 +8,7 @@ source ~/.profile
 sudo apt-get install openjdk-8-jre -y
 curl -L -O https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-5.6.11.deb
 sudo dpkg -i elasticsearch-5.6.11.deb
+# vim /etc/elasticsearch/jvm.options
 sudo /etc/init.d/elasticsearch start
 
 cd ~
