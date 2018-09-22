@@ -32,7 +32,6 @@ func main() {
 
 	for meta := range p.MetaChan() {
 		meta.Hash = fmt.Sprintf("%x", meta.Hash)
-		log.Printf("metadata: %v", meta)
 
 		result := ""
 		e := client.Call(config.DataService, meta, &result)
