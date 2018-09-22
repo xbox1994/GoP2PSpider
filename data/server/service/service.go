@@ -2,8 +2,8 @@ package service
 
 import (
 	"GoP2PSpider/config"
-	"GoP2PSpider/types"
 	"context"
+	"github.com/neoql/btlet"
 	"gopkg.in/olivere/elastic.v5"
 	"log"
 )
@@ -12,8 +12,8 @@ type DataService struct {
 	Client *elastic.Client
 }
 
-func (d *DataService) Save(torrent *types.Torrent, result *string) error {
-	query := elastic.NewTermQuery("_id", torrent.InfoHashHex)
+func (d *DataService) Save(torrent *btlet.Meta, result *string) error {
+	query := elastic.NewTermQuery("_id", torrent.Hash)
 	searchResult, e := d.Client.Search().
 		Index(config.ElasticIndex).
 		Type(config.ElasticType).
@@ -36,13 +36,13 @@ func (d *DataService) Save(torrent *types.Torrent, result *string) error {
 	return saveErr
 }
 
-func Save(client *elastic.Client, torrent types.Torrent) error {
+func Save(client *elastic.Client, torrent btlet.Meta) error {
 	_, e := client.Index().
 		Index(config.ElasticIndex).
 		Type(config.ElasticType).
-		Id(torrent.InfoHashHex).
+		Id(torrent.Hash).
 		BodyJson(torrent).
-		Id(torrent.InfoHashHex).
+		Id(torrent.Hash).
 		Do(context.Background())
 	if e != nil {
 		log.Printf("es create index fail %v", e)

@@ -1,5 +1,5 @@
 # GoP2PSpider
-A distributed P2P spider made by Go, only for study, based on https://github.com/fanpei91/p2pspider.
+A distributed P2P spider made by Go, only for study, based on https://github.com/neoql/btlet
 
 GoP2PSpider architecture image:
 
@@ -11,7 +11,4 @@ GoP2PSpider architecture image:
 3. run `restart.sh` on standalone server or run data service on one server `go run data/server/main.go` and run as many workers as possible in any server `go run worker/server/main.go -wc 50`
 
 # TODO
-1. worker code refactor
-2. worker performance enhancement
-3. data service query api and web interface
-4. remove torrent saver function
+data service query api and web interface
