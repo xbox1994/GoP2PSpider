@@ -34,7 +34,7 @@ func main() {
 		meta.Hash = fmt.Sprintf("%x", meta.Hash)
 
 		result := ""
-		e := client.Call(config.DataService, meta, &result)
+		e := client.Call(config.DataServiceSave, meta, &result)
 		if e != nil {
 			log.Printf("worker call data error: %v", e)
 		}

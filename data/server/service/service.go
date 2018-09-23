@@ -2,10 +2,12 @@ package service
 
 import (
 	"GoP2PSpider/config"
+	"GoP2PSpider/types"
 	"context"
 	"github.com/neoql/btlet"
 	"gopkg.in/olivere/elastic.v5"
 	"log"
+	"reflect"
 )
 
 type DataService struct {
@@ -34,6 +36,31 @@ func (d *DataService) Save(torrent *btlet.Meta, result *string) error {
 		log.Printf("Error saving %s, %v", torrent, saveErr)
 	}
 	return saveErr
+}
+
+var pageSize = 10
+
+func (d *DataService) Query(param *types.QueryParam, result *types.QueryResult) error {
+	log.Printf("Query: %v", param)
+	searchResult, e := d.Client.
+		Search(config.ElasticIndex).
+		Query(elastic.NewQueryStringQuery("*" + param.Q + "*")).
+		Size(pageSize).
+		From(param.Start).
+		Do(context.Background())
+	if e != nil {
+		log.Printf("Error query: %v, error: %v", param, e)
+	}
+
+	var queryResult types.QueryResult
+	queryResult.Query = param.Q
+	queryResult.Hits = searchResult.TotalHits()
+	queryResult.Start = param.Start
+	queryResult.Items = searchResult.Each(reflect.TypeOf(btlet.Meta{}))
+	queryResult.PrevStart = param.Start - pageSize
+	queryResult.NextStart = queryResult.Start + len(queryResult.Items)
+	result = &queryResult
+	return nil
 }
 
 func Save(client *elastic.Client, torrent btlet.Meta) error {

@@ -6,8 +6,6 @@ const (
 	ElasticType  = "t"
 
 	// Rpc Method
-	DataService = "DataService.Save"
-
-	// Rate limiting
-	Qps = 20
+	DataServiceSave  = "DataServiceSave.Save"
+	DataServiceQuery = "DataServiceSave.Query"
 )
