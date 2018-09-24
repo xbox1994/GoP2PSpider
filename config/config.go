@@ -6,6 +6,6 @@ const (
 	ElasticType  = "t"
 
 	// Rpc Method
-	DataServiceSave  = "DataServiceSave.Save"
-	DataServiceQuery = "DataServiceSave.Query"
+	DataServiceSave  = "DataService.Save"
+	DataServiceQuery = "DataService.Query"
 )
