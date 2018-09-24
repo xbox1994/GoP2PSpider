@@ -44,7 +44,8 @@ func (d *DataService) Query(param *types.QueryParam, result *types.QueryResult) 
 	log.Printf("Query: %v", param)
 	searchResult, e := d.Client.
 		Search(config.ElasticIndex).
-		Query(elastic.NewQueryStringQuery("*" + param.Q + "*")).
+		Type(config.ElasticType).
+		Query(elastic.NewQueryStringQuery(param.Q)).
 		Size(pageSize).
 		From(param.Start).
 		Do(context.Background())
@@ -52,14 +53,12 @@ func (d *DataService) Query(param *types.QueryParam, result *types.QueryResult) 
 		log.Printf("Error query: %v, error: %v", param, e)
 	}
 
-	var queryResult types.QueryResult
-	queryResult.Query = param.Q
-	queryResult.Hits = searchResult.TotalHits()
-	queryResult.Start = param.Start
-	queryResult.Items = searchResult.Each(reflect.TypeOf(btlet.Meta{}))
-	queryResult.PrevStart = param.Start - pageSize
-	queryResult.NextStart = queryResult.Start + len(queryResult.Items)
-	result = &queryResult
+	result.Query = param.Q
+	result.Hits = searchResult.TotalHits()
+	result.Start = param.Start
+	result.Items = searchResult.Each(reflect.TypeOf(btlet.Meta{}))
+	result.PrevStart = param.Start - pageSize
+	result.NextStart = result.Start + len(result.Items)
 	return nil
 }
 
