@@ -38,11 +38,15 @@ func (this *SearchController) Get() {
 		}
 
 		result := types.QueryResult{}
-		dataClient.Call(config.DataServiceQuery, types.QueryParam{
+		e := dataClient.Call(config.DataServiceQuery, types.QueryParam{
 			Q:     q,
 			Start: start,
 		}, &result)
-		log.Printf("receive data:%v", result)
+		if e != nil {
+			log.Printf("call data service failed: %v", e)
+		} else {
+			log.Printf("receive data:%v", result)
+		}
 		this.TplName = "search.tpl"
 	}
 }
