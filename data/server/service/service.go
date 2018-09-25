@@ -4,7 +4,6 @@ import (
 	"GoP2PSpider/config"
 	"GoP2PSpider/types"
 	"context"
-	"github.com/neoql/btlet"
 	"gopkg.in/olivere/elastic.v5"
 	"log"
 	"reflect"
@@ -14,7 +13,7 @@ type DataService struct {
 	Client *elastic.Client
 }
 
-func (d *DataService) Save(torrent *btlet.Meta, result *string) error {
+func (d *DataService) Save(torrent *types.Meta, result *string) error {
 	query := elastic.NewTermQuery("_id", torrent.Hash)
 	searchResult, e := d.Client.Search().
 		Index(config.ElasticIndex).
@@ -26,11 +25,10 @@ func (d *DataService) Save(torrent *btlet.Meta, result *string) error {
 		return e
 	}
 
-	//log.Printf("Torrent received in data service, will be save to es: %s", torrent)
 	saveErr := Save(d.Client, *torrent)
 	if saveErr == nil {
 		*result = "ok"
-		//log.Printf("Success saving %s", torrent)
+		log.Printf("Success saving %s", torrent)
 	} else {
 		*result = "fail"
 		log.Printf("Error saving %s, %v", torrent, saveErr)
@@ -56,13 +54,13 @@ func (d *DataService) Query(param *types.QueryParam, result *types.QueryResult) 
 	result.Query = param.Q
 	result.Hits = searchResult.TotalHits()
 	result.Start = param.Start
-	result.Items = searchResult.Each(reflect.TypeOf(btlet.Meta{}))
+	result.Items = searchResult.Each(reflect.TypeOf(types.Meta{}))
 	result.PrevStart = param.Start - pageSize
 	result.NextStart = result.Start + len(result.Items)
 	return nil
 }
 
-func Save(client *elastic.Client, torrent btlet.Meta) error {
+func Save(client *elastic.Client, torrent types.Meta) error {
 	_, e := client.Index().
 		Index(config.ElasticIndex).
 		Type(config.ElasticType).
